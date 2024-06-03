@@ -1,0 +1,135 @@
+Data Table = 
+VAR _minDate = YEAR(MIN(Data[Crime Date]))
+VAR _MaxDate = YEAR(MAX(Data[Crime Date]))
+RETURN
+ADDCOLUMNS(
+    FILTER(
+    CALENDARAUTO(),
+    YEAR([Date])>= _minDate &&
+    YEAR([Date]) <= _MaxDate),
+    "Year",YEAR([Date]),
+    "Month", Format([date],"mmm"),
+    "Day",FORMAT([Date],"DD"),
+    "Monthumber",MONTH([Date])
+)
+################################################
+Crime prev.year = 
+CALCULATE(
+    [Total Crime],
+    SAMEPERIODLASTYEAR('Data Table'[Date])
+)
+
+############################################################
+
+Blank Measure (year) = 200
+##############################################
+Label (Year) = 
+VAR _Prevyear=
+
+    CALCULATE(
+        [Total Crime],
+        SAMEPERIODLASTYEAR('Data Table'[Date])
+    )
+VAR _YOYChange =
+IF(_Prevyear <>BLANK(),
+  [Total Crime] - _Prevyear ,BLANK())
+
+  RETURN
+  SWITCH(
+    TRUE(),
+    _YOYChange =0,_YOYChange&"-",
+    _YOYChange>=1,"▲ " & _YOYChange,
+    _YOYChange <1,"▼ "&_YOYChange)
+
+###############################################
+CF (Year) = 
+VAR _Prevyear=
+
+    CALCULATE(
+        [Total Crime],
+        SAMEPERIODLASTYEAR('Data Table'[Date])
+    )
+VAR _YOYChange =
+IF(_Prevyear <>BLANK(),
+  [Total Crime] - _Prevyear ,BLANK())
+
+  RETURN
+  SWITCH(
+    TRUE(),
+    _YOYChange =0,"Gray",
+    _YOYChange>=1,"Green",
+    _YOYChange <1,"Red")
+###################################################
+Blank Measure (Month) = 
+MAXX(
+    ALL(
+        'Data Table'[Month]),
+        [Total Crime]/20
+)
+
+##########################################################
+Label Month = 
+  VAR _Pct_MOMChange =
+  IF(
+     DIVIDE(
+       ([Total Crime]-[Crime prevmonth]),[Crime prevmonth]
+       )
+       <>BLANK(),
+         DIVIDE(
+       ([Total Crime]-[Crime prevmonth]),[Crime prevmonth]
+       ),
+       BLANK()
+  )
+
+    VAR _negativePct = -0.01
+    RETURN
+    SWITCH(
+        TRUE(),
+        _Pct_MOMChange = 0,_Pct_MOMChange&" -",
+        _Pct_MOMChange >=_negativePct,"▲ " & FORMAT(_Pct_MOMChange,"0%"),
+        _Pct_MOMChange<_negativePct,"▼ " & FORMAT(_Pct_MOMChange,"0%")
+    )
+
+
+
+########################################################
+
+CF Month = 
+  VAR _Pct_MOMChange =
+  IF(
+     DIVIDE(
+       ([Total Crime]-[Crime prevmonth]),[Crime prevmonth]
+       )
+       <>BLANK(),
+         DIVIDE(
+       ([Total Crime]-[Crime prevmonth]),[Crime prevmonth]
+       ),
+       BLANK()
+  )
+
+    VAR _negativePct = -0.01
+    RETURN
+    SWITCH(
+        TRUE(),
+        _Pct_MOMChange = 0,"Gray",
+        _Pct_MOMChange >=_negativePct,"Green",
+        _Pct_MOMChange<_negativePct,"Red"
+    )
+
+#####################################################
+Time Group = 
+SWITCH(
+    TRUE(),
+    MOD(HOUR('Data'[Crime Time]),24) >=0 && MOD(HOUR(Data[Crime Time]),24)<=3,"12.00 AM - 2.59 AM",
+    MOD(HOUR('Data'[Crime Time]),24) >=3 && MOD(HOUR(Data[Crime Time]),24)<=6,"3.00 AM - 5.59 AM",
+    MOD(HOUR('Data'[Crime Time]),24) >=6 && MOD(HOUR(Data[Crime Time]),24)<=9,"6.00 AM - 8.59 AM",
+    MOD(HOUR('Data'[Crime Time]),24) >=9 && MOD(HOUR(Data[Crime Time]),24)<=12,"9.00 AM - 11.59 AM",
+    MOD(HOUR('Data'[Crime Time]),24) >=12 && MOD(HOUR(Data[Crime Time]),24)<=15,"12.00 PM - 2.59 PM",
+    MOD(HOUR('Data'[Crime Time]),24) >=15 && MOD(HOUR(Data[Crime Time]),24)<=18,"3.00 PM - 5.59 PM",
+    MOD(HOUR('Data'[Crime Time]),24) >=18 && MOD(HOUR(Data[Crime Time]),24)<=21,"6.00 PM - 8.59 PM",
+    MOD(HOUR('Data'[Crime Time]),24) >=21 && MOD(HOUR(Data[Crime Time]),24)<=24,"9.00 PM - 11.59 PM"
+
+)
+
+
+
